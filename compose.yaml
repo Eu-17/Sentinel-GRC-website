@@ -1,0 +1,17 @@
+services:
+  web:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    environment:
+      ENABLE_UPLOADS: "${ENABLE_UPLOADS:-0}"
+      GITHUB_REPOSITORY: "${GITHUB_REPOSITORY:-}"
+    read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 768m

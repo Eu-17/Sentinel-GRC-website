@@ -1,0 +1,26 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "SentinelGRC · local server",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": [
+        "app.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000"
+      ],
+      "cwd": "${workspaceFolder}",
+      "env": {
+        "ENABLE_UPLOADS": "1",
+        "RULES_FILE": "${workspaceFolder}/.sentinel-rules.json",
+        "CAPTURE_LIBRARY_DIR": "${workspaceFolder}/.sentinel-captures"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true
+    }
+  ]
+}

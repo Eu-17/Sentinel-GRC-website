@@ -1,0 +1,110 @@
+[
+  {
+    "id": "NET-SOC-101",
+    "name": "Possible ransomware C2 beaconing",
+    "short": "Ransomware C2",
+    "sample": "ransomware",
+    "file": "01_ransomware_c2.pcap",
+    "summary": "Repeated HTTP check-ins from a workstation to an external web endpoint.",
+    "severity": "Critical",
+    "protocol": "HTTP",
+    "direction": "egress",
+    "filter": "ip && tcp && http.request.method == \"GET\" && http.request.uri contains \"/gate.php\" && http.user_agent contains \"MSIE\"",
+    "technique": "T1071.001",
+    "technique_name": "Web Protocols",
+    "tactic": "TA0011 · Command and Control",
+    "controls": [
+      [
+        "A.8.20",
+        "Networks security"
+      ],
+      [
+        "A.8.7",
+        "Protection against malware"
+      ],
+      [
+        "A.5.24",
+        "Incident management planning and preparation"
+      ]
+    ],
+    "likelihood": 4,
+    "impact": 5,
+    "penalty": 1.5,
+    "review": "Check whether personal information became unavailable or left the environment.",
+    "playbook": [
+      "Confirm the destination and timing against the workstation’s normal traffic.",
+      "Correlate the connection with endpoint process and DNS logs.",
+      "If compromise is confirmed, isolate the workstation and review the egress block with the network owner."
+    ]
+  },
+  {
+    "id": "NET-SOC-102",
+    "name": "SQL injection indicators",
+    "short": "SQL injection",
+    "sample": "sqli",
+    "file": "02_sql_indicators.pcap",
+    "summary": "HTTP requests carrying SQL-related markers at an application boundary.",
+    "severity": "High",
+    "protocol": "HTTP",
+    "direction": "ingress",
+    "filter": "ip && tcp && http.request && (upper(http.request.uri) contains \"SELECT\" || upper(http.request.uri) contains \"UNION\" || http.request.uri contains \"1=1\")",
+    "technique": "T1190",
+    "technique_name": "Exploit Public-Facing Application",
+    "tactic": "TA0001 · Initial Access",
+    "controls": [
+      [
+        "A.8.28",
+        "Secure coding"
+      ],
+      [
+        "A.8.16",
+        "Monitoring activities"
+      ]
+    ],
+    "likelihood": 5,
+    "impact": 4,
+    "penalty": 1.25,
+    "review": "Review application and database records to establish whether personal information was accessed.",
+    "playbook": [
+      "Review matching request metadata and application response logs.",
+      "Correlate requests with database audit events to assess any data access.",
+      "Review input handling with the application owner and verify parameterised queries."
+    ]
+  },
+  {
+    "id": "NET-SOC-103",
+    "name": "Repeated SSH connection attempts",
+    "short": "SSH connection burst",
+    "sample": "ssh",
+    "file": "03_ssh_burst.pcap",
+    "summary": "A single source opens repeated connections to an SSH service within one minute.",
+    "severity": "Medium",
+    "protocol": "TCP",
+    "direction": "ingress",
+    "filter": "ip && tcp.dstport == 22 && tcp.flags.syn == 1 && tcp.flags.ack == 0",
+    "min_connections": 6,
+    "window_seconds": 60,
+    "technique": "T1110",
+    "technique_name": "Brute Force",
+    "tactic": "TA0006 · Credential Access",
+    "controls": [
+      [
+        "A.8.5",
+        "Secure authentication"
+      ],
+      [
+        "A.8.16",
+        "Monitoring activities"
+      ]
+    ],
+    "likelihood": 3,
+    "impact": 4,
+    "penalty": 1.25,
+    "review": "Check authentication outcomes and whether any affected account could access personal information.",
+    "playbook": [
+      "Check SSH authentication logs for failed or successful sign-ins.",
+      "Identify expected scans and approved administration sources.",
+      "Review account access and rate limits with the service owner."
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+**
+!requirements.txt
+!app
+!app/**
+!sample_pcaps
+!sample_pcaps/01_ransomware_c2.pcap
+!sample_pcaps/02_sql_indicators.pcap
+!sample_pcaps/03_ssh_burst.pcap
+!sample_pcaps/fixtures.json
+**/__pycache__/
+**/*.pyc
+!requirements-dev.txt
+!tests
+!tests/**
+**/__pycache__/
+**/*.pyc

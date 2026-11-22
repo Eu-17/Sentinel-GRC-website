@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: sentinelgrc
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /healthz
+    envVars:
+      - key: ENABLE_UPLOADS
+        value: "0"
+      - key: ENABLE_OLLAMA
+        value: "0"

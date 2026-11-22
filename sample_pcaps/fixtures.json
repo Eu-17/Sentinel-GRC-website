@@ -1,0 +1,641 @@
+{
+  "ransomware": {
+    "title": "Ransomware C2",
+    "description": "Repeated HTTP check-ins from a workstation to an external web endpoint.",
+    "sha256": "3e88b09b4363b595c13ce56389fbe5c02ab3222e9a4e95297d7a985b25f26668",
+    "size": 3408,
+    "report": {
+      "capture": "01_ransomware_c2.pcap",
+      "engine": "Fixture replay",
+      "frames": 16,
+      "findings": [
+        {
+          "id": "NET-SOC-101",
+          "name": "Possible ransomware C2 beaconing",
+          "severity": "Critical",
+          "technique": "T1071.001",
+          "technique_name": "Web Protocols",
+          "tactic": "TA0011 \u00b7 Command and Control",
+          "count": 12,
+          "flows": [
+            {
+              "frame": 1,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430400,
+              "protocol": "HTTP",
+              "bytes": 151
+            },
+            {
+              "frame": 2,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430403,
+              "protocol": "HTTP",
+              "bytes": 180
+            },
+            {
+              "frame": 3,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430406,
+              "protocol": "HTTP",
+              "bytes": 209
+            },
+            {
+              "frame": 4,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430409,
+              "protocol": "HTTP",
+              "bytes": 238
+            },
+            {
+              "frame": 5,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430412,
+              "protocol": "HTTP",
+              "bytes": 170
+            },
+            {
+              "frame": 6,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430415,
+              "protocol": "HTTP",
+              "bytes": 199
+            },
+            {
+              "frame": 7,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430418,
+              "protocol": "HTTP",
+              "bytes": 228
+            },
+            {
+              "frame": 8,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430421,
+              "protocol": "HTTP",
+              "bytes": 160
+            },
+            {
+              "frame": 9,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430424,
+              "protocol": "HTTP",
+              "bytes": 189
+            },
+            {
+              "frame": 10,
+              "source": "192.0.2.18",
+              "destination": "198.51.100.42",
+              "time": 1780430427,
+              "protocol": "HTTP",
+              "bytes": 218
+            }
+          ],
+          "firewall": [
+            "iptables -A OUTPUT -d 198.51.100.42 -j DROP"
+          ],
+          "address_count": 1,
+          "playbook": [
+            "Confirm the destination and timing against the workstation\u2019s normal traffic.",
+            "Correlate the connection with endpoint process and DNS logs.",
+            "If compromise is confirmed, isolate the workstation and review the egress block with the network owner."
+          ],
+          "risk": {
+            "status": "CONTROL_FAILURE_DETECTED",
+            "likelihood": 4,
+            "impact": 5,
+            "inherent": 20,
+            "baseline": 8.0,
+            "score": 25,
+            "controls": [
+              {
+                "id": "A.8.20",
+                "name": "Networks security",
+                "state": "FAIL",
+                "evidence": "Frame 1 and 11 other matching frames."
+              },
+              {
+                "id": "A.8.7",
+                "name": "Protection against malware",
+                "state": "FAIL",
+                "evidence": "Frame 1 and 11 other matching frames."
+              },
+              {
+                "id": "A.5.24",
+                "name": "Incident management planning and preparation",
+                "state": "FAIL",
+                "evidence": "Frame 1 and 11 other matching frames."
+              }
+            ],
+            "review": "Check whether personal information became unavailable or left the environment."
+          },
+          "brief": {
+            "source": "Rule-based",
+            "soc": "12 frames match the Ransomware C2 signature. Start with frame 1 and correlate the network evidence with host logs.",
+            "grc": "3 mapped controls need review. The scenario risk score rose from 8 to 25 out of 25. Check whether personal information became unavailable or left the environment."
+          }
+        },
+        {
+          "id": "NET-SOC-102",
+          "name": "SQL injection indicators",
+          "severity": "High",
+          "technique": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "TA0001 \u00b7 Initial Access",
+          "count": 0,
+          "flows": [],
+          "firewall": [],
+          "address_count": 0,
+          "playbook": [
+            "Review matching request metadata and application response logs.",
+            "Correlate requests with database audit events to assess any data access.",
+            "Review input handling with the application owner and verify parameterised queries."
+          ],
+          "risk": {
+            "status": "COMPLIANT",
+            "likelihood": 5,
+            "impact": 4,
+            "inherent": 20,
+            "baseline": 8.0,
+            "score": 8.0,
+            "controls": [
+              {
+                "id": "A.8.28",
+                "name": "Secure coding",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              },
+              {
+                "id": "A.8.16",
+                "name": "Monitoring activities",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              }
+            ],
+            "review": null
+          },
+          "brief": {
+            "source": "Rule-based",
+            "soc": "No frames matched this rule in the capture.",
+            "grc": "This capture supplied no adverse evidence for this rule."
+          }
+        },
+        {
+          "id": "NET-SOC-103",
+          "name": "Repeated SSH connection attempts",
+          "severity": "Medium",
+          "technique": "T1110",
+          "technique_name": "Brute Force",
+          "tactic": "TA0006 \u00b7 Credential Access",
+          "count": 0,
+          "flows": [],
+          "firewall": [],
+          "address_count": 0,
+          "playbook": [
+            "Check SSH authentication logs for failed or successful sign-ins.",
+            "Identify expected scans and approved administration sources.",
+            "Review account access and rate limits with the service owner."
+          ],
+          "risk": {
+            "status": "COMPLIANT",
+            "likelihood": 3,
+            "impact": 4,
+            "inherent": 12,
+            "baseline": 4.8,
+            "score": 4.8,
+            "controls": [
+              {
+                "id": "A.8.5",
+                "name": "Secure authentication",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              },
+              {
+                "id": "A.8.16",
+                "name": "Monitoring activities",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              }
+            ],
+            "review": null
+          },
+          "brief": {
+            "source": "Rule-based",
+            "soc": "No frames matched this rule in the capture.",
+            "grc": "This capture supplied no adverse evidence for this rule."
+          }
+        }
+      ]
+    }
+  },
+  "sqli": {
+    "title": "SQL injection",
+    "description": "HTTP requests carrying SQL-related markers at an application boundary.",
+    "sha256": "43fd7d22fdc19095f5cb7055450adce7cd2c3556bd6351d2bbed39fbfa415d95",
+    "size": 1462,
+    "report": {
+      "capture": "02_sql_indicators.pcap",
+      "engine": "Fixture replay",
+      "frames": 7,
+      "findings": [
+        {
+          "id": "NET-SOC-101",
+          "name": "Possible ransomware C2 beaconing",
+          "severity": "Critical",
+          "technique": "T1071.001",
+          "technique_name": "Web Protocols",
+          "tactic": "TA0011 \u00b7 Command and Control",
+          "count": 0,
+          "flows": [],
+          "firewall": [],
+          "address_count": 0,
+          "playbook": [
+            "Confirm the destination and timing against the workstation\u2019s normal traffic.",
+            "Correlate the connection with endpoint process and DNS logs.",
+            "If compromise is confirmed, isolate the workstation and review the egress block with the network owner."
+          ],
+          "risk": {
+            "status": "COMPLIANT",
+            "likelihood": 4,
+            "impact": 5,
+            "inherent": 20,
+            "baseline": 8.0,
+            "score": 8.0,
+            "controls": [
+              {
+                "id": "A.8.20",
+                "name": "Networks security",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              },
+              {
+                "id": "A.8.7",
+                "name": "Protection against malware",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              },
+              {
+                "id": "A.5.24",
+                "name": "Incident management planning and preparation",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              }
+            ],
+            "review": null
+          },
+          "brief": {
+            "source": "Rule-based",
+            "soc": "No frames matched this rule in the capture.",
+            "grc": "This capture supplied no adverse evidence for this rule."
+          }
+        },
+        {
+          "id": "NET-SOC-102",
+          "name": "SQL injection indicators",
+          "severity": "High",
+          "technique": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "TA0001 \u00b7 Initial Access",
+          "count": 3,
+          "flows": [
+            {
+              "frame": 1,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430400,
+              "protocol": "HTTP",
+              "bytes": 152
+            },
+            {
+              "frame": 2,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430403,
+              "protocol": "HTTP",
+              "bytes": 181
+            },
+            {
+              "frame": 3,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430406,
+              "protocol": "HTTP",
+              "bytes": 210
+            }
+          ],
+          "firewall": [
+            "iptables -A INPUT -s 203.0.113.24 -j DROP"
+          ],
+          "address_count": 1,
+          "playbook": [
+            "Review matching request metadata and application response logs.",
+            "Correlate requests with database audit events to assess any data access.",
+            "Review input handling with the application owner and verify parameterised queries."
+          ],
+          "risk": {
+            "status": "CONTROL_FAILURE_DETECTED",
+            "likelihood": 5,
+            "impact": 4,
+            "inherent": 20,
+            "baseline": 8.0,
+            "score": 25,
+            "controls": [
+              {
+                "id": "A.8.28",
+                "name": "Secure coding",
+                "state": "FAIL",
+                "evidence": "Frame 1 and 2 other matching frames."
+              },
+              {
+                "id": "A.8.16",
+                "name": "Monitoring activities",
+                "state": "FAIL",
+                "evidence": "Frame 1 and 2 other matching frames."
+              }
+            ],
+            "review": "Review application and database records to establish whether personal information was accessed."
+          },
+          "brief": {
+            "source": "Rule-based",
+            "soc": "3 frames match the SQL injection signature. Start with frame 1 and correlate the network evidence with host logs.",
+            "grc": "2 mapped controls need review. The scenario risk score rose from 8 to 25 out of 25. Review application and database records to establish whether personal information was accessed."
+          }
+        },
+        {
+          "id": "NET-SOC-103",
+          "name": "Repeated SSH connection attempts",
+          "severity": "Medium",
+          "technique": "T1110",
+          "technique_name": "Brute Force",
+          "tactic": "TA0006 \u00b7 Credential Access",
+          "count": 0,
+          "flows": [],
+          "firewall": [],
+          "address_count": 0,
+          "playbook": [
+            "Check SSH authentication logs for failed or successful sign-ins.",
+            "Identify expected scans and approved administration sources.",
+            "Review account access and rate limits with the service owner."
+          ],
+          "risk": {
+            "status": "COMPLIANT",
+            "likelihood": 3,
+            "impact": 4,
+            "inherent": 12,
+            "baseline": 4.8,
+            "score": 4.8,
+            "controls": [
+              {
+                "id": "A.8.5",
+                "name": "Secure authentication",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              },
+              {
+                "id": "A.8.16",
+                "name": "Monitoring activities",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              }
+            ],
+            "review": null
+          },
+          "brief": {
+            "source": "Rule-based",
+            "soc": "No frames matched this rule in the capture.",
+            "grc": "This capture supplied no adverse evidence for this rule."
+          }
+        }
+      ]
+    }
+  },
+  "ssh": {
+    "title": "SSH connection burst",
+    "description": "A single source opens repeated connections to an SSH service within one minute.",
+    "sha256": "2ccb9bf4e9da98c096ae0410f8e802335b5080f2a002540610abdf9f95206ea9",
+    "size": 1429,
+    "report": {
+      "capture": "03_ssh_burst.pcap",
+      "engine": "Fixture replay",
+      "frames": 12,
+      "findings": [
+        {
+          "id": "NET-SOC-101",
+          "name": "Possible ransomware C2 beaconing",
+          "severity": "Critical",
+          "technique": "T1071.001",
+          "technique_name": "Web Protocols",
+          "tactic": "TA0011 \u00b7 Command and Control",
+          "count": 0,
+          "flows": [],
+          "firewall": [],
+          "address_count": 0,
+          "playbook": [
+            "Confirm the destination and timing against the workstation\u2019s normal traffic.",
+            "Correlate the connection with endpoint process and DNS logs.",
+            "If compromise is confirmed, isolate the workstation and review the egress block with the network owner."
+          ],
+          "risk": {
+            "status": "COMPLIANT",
+            "likelihood": 4,
+            "impact": 5,
+            "inherent": 20,
+            "baseline": 8.0,
+            "score": 8.0,
+            "controls": [
+              {
+                "id": "A.8.20",
+                "name": "Networks security",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              },
+              {
+                "id": "A.8.7",
+                "name": "Protection against malware",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              },
+              {
+                "id": "A.5.24",
+                "name": "Incident management planning and preparation",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              }
+            ],
+            "review": null
+          },
+          "brief": {
+            "source": "Rule-based",
+            "soc": "No frames matched this rule in the capture.",
+            "grc": "This capture supplied no adverse evidence for this rule."
+          }
+        },
+        {
+          "id": "NET-SOC-102",
+          "name": "SQL injection indicators",
+          "severity": "High",
+          "technique": "T1190",
+          "technique_name": "Exploit Public-Facing Application",
+          "tactic": "TA0001 \u00b7 Initial Access",
+          "count": 0,
+          "flows": [],
+          "firewall": [],
+          "address_count": 0,
+          "playbook": [
+            "Review matching request metadata and application response logs.",
+            "Correlate requests with database audit events to assess any data access.",
+            "Review input handling with the application owner and verify parameterised queries."
+          ],
+          "risk": {
+            "status": "COMPLIANT",
+            "likelihood": 5,
+            "impact": 4,
+            "inherent": 20,
+            "baseline": 8.0,
+            "score": 8.0,
+            "controls": [
+              {
+                "id": "A.8.28",
+                "name": "Secure coding",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              },
+              {
+                "id": "A.8.16",
+                "name": "Monitoring activities",
+                "state": "PASS",
+                "evidence": "No matching frames in this capture."
+              }
+            ],
+            "review": null
+          },
+          "brief": {
+            "source": "Rule-based",
+            "soc": "No frames matched this rule in the capture.",
+            "grc": "This capture supplied no adverse evidence for this rule."
+          }
+        },
+        {
+          "id": "NET-SOC-103",
+          "name": "Repeated SSH connection attempts",
+          "severity": "Medium",
+          "technique": "T1110",
+          "technique_name": "Brute Force",
+          "tactic": "TA0006 \u00b7 Credential Access",
+          "count": 8,
+          "flows": [
+            {
+              "frame": 1,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430400,
+              "protocol": "TCP",
+              "bytes": 54
+            },
+            {
+              "frame": 2,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430403,
+              "protocol": "TCP",
+              "bytes": 54
+            },
+            {
+              "frame": 3,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430406,
+              "protocol": "TCP",
+              "bytes": 54
+            },
+            {
+              "frame": 4,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430409,
+              "protocol": "TCP",
+              "bytes": 54
+            },
+            {
+              "frame": 5,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430412,
+              "protocol": "TCP",
+              "bytes": 54
+            },
+            {
+              "frame": 6,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430415,
+              "protocol": "TCP",
+              "bytes": 54
+            },
+            {
+              "frame": 7,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430418,
+              "protocol": "TCP",
+              "bytes": 54
+            },
+            {
+              "frame": 8,
+              "source": "203.0.113.24",
+              "destination": "192.0.2.80",
+              "time": 1780430421,
+              "protocol": "TCP",
+              "bytes": 54
+            }
+          ],
+          "firewall": [
+            "iptables -A INPUT -s 203.0.113.24 -j DROP"
+          ],
+          "address_count": 1,
+          "playbook": [
+            "Check SSH authentication logs for failed or successful sign-ins.",
+            "Identify expected scans and approved administration sources.",
+            "Review account access and rate limits with the service owner."
+          ],
+          "risk": {
+            "status": "CONTROL_FAILURE_DETECTED",
+            "likelihood": 3,
+            "impact": 4,
+            "inherent": 12,
+            "baseline": 4.8,
+            "score": 15.0,
+            "controls": [
+              {
+                "id": "A.8.5",
+                "name": "Secure authentication",
+                "state": "FAIL",
+                "evidence": "Frame 1 and 7 other matching frames."
+              },
+              {
+                "id": "A.8.16",
+                "name": "Monitoring activities",
+                "state": "FAIL",
+                "evidence": "Frame 1 and 7 other matching frames."
+              }
+            ],
+            "review": "Check authentication outcomes and whether any affected account could access personal information."
+          },
+          "brief": {
+            "source": "Rule-based",
+            "soc": "8 frames match the SSH connection burst signature. Start with frame 1 and correlate the network evidence with host logs.",
+            "grc": "2 mapped controls need review. The scenario risk score rose from 4.8 to 15 out of 25. Check authentication outcomes and whether any affected account could access personal information."
+          }
+        }
+      ]
+    }
+  }
+}

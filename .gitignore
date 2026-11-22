@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+.DS_Store
+.sentinel-rules.json
+/.sentinel-captures/
+*.pem
+*.key
+*.pcap
+*.pcapng
+*.cap
+!sample_pcaps/01_ransomware_c2.pcap
+!sample_pcaps/02_sql_indicators.pcap
+!sample_pcaps/03_ssh_burst.pcap

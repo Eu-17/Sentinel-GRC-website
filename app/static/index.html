@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="theme-color" content="#0b1018">
+    <meta name="description"
+      content="Investigate packet captures and trace detection evidence to security controls in SentinelGRC.">
+    <title>Security workbench · SentinelGRC</title>
+    <link rel="icon" href="mark.svg">
+    <link rel="stylesheet" href="style.css">
+    <script defer src="demo-data.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+
+  <body>
+    <a class="skip" href="#main">Skip to workbench</a>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Workspace navigation">
+        <a class="brand" href="#workbench"><img src="mark.svg" width="38" height="38"
+            alt=""><span>Sentinel<b>GRC</b></span></a>
+        <nav aria-label="Main">
+          <p class="nav-label">Workspace</p>
+          <a class="nav-link" href="#workbench" data-route="workbench" aria-current="page"><i
+              data-icon="grid"></i>Workbench</a>
+          <a class="nav-link" href="#captures" data-route="captures"><i data-icon="layers"></i>Capture
+            library</a>
+          <a class="nav-link" href="#rules" data-route="rules"><i data-icon="shield"></i>Detection
+            rules</a>
+        </nav>
+        <div class="engine">
+          <div class="engine-icon"><i data-icon="cpu"></i></div>
+          <div><small>Analysis engine</small><strong id="engine-label">Fixture replay</strong></div>
+        </div>
+      </aside>
+      <div class="surface">
+        <header class="topbar"><a class="mobile-brand" href="#workbench"><img src="mark.svg"
+              alt="">SentinelGRC</a>
+          <div class="crumb"><i data-icon="panel"></i><span>Workspace</span><span
+              class="slash">/</span><b id="crumb">Workbench</b></div>
+        </header>
+        <main id="main" tabindex="-1">
+          <div class="page-heading">
+            <div>
+              <h1 id="page-title">Security workbench</h1>
+              <p id="page-description">Investigate network detections and trace their impact on security
+                controls.</p>
+            </div>
+          </div>
+          <section id="workbench">
+            <div class="view-switch" role="group" aria-label="Analysis perspective">
+              <button id="soc-view" aria-pressed="true"><i data-icon="pulse"></i>SOC &amp;
+                network</button>
+              <button id="grc-view" aria-pressed="false"><i data-icon="shield"></i>GRC &amp;
+                audit</button>
+            </div>
+            <section class="capture-panel" aria-label="Active capture">
+              <div class="capture-info">
+                <div class="eyebrow accent"><span class="tiny-rule"></span>Active capture</div>
+                <h2 id="capture-title">Ransomware C2</h2>
+                <div class="capture-meta"><i data-icon="file"></i><span
+                    id="capture-file">01_ransomware_c2.pcap</span><span class="file-badge"
+                    id="capture-type">DEMO PCAP</span></div>
+                <div class="actions"><button class="primary" id="run"><i data-icon="play"></i><span>Run
+                      analysis</span></button><a class="secondary" href="#captures"><i
+                      data-icon="layers"></i>Change capture</a></div>
+              </div>
+              <figure class="trace">
+                <figcaption><span class="eyebrow">Packet trace</span><span id="trace-unit">FRAME SIZE /
+                    B</span></figcaption>
+                <svg id="trace" viewBox="0 0 420 104" role="img"
+                  aria-label="Frame sizes for up to ten matching packets"></svg>
+                <div class="trace-foot"><span id="trace-legend">Matched frames</span><span
+                    id="trace-span"></span></div>
+              </figure>
+            </section>
+            <p class="status" id="status" role="status"></p>
+            <div id="metrics" class="metrics"></div>
+            <section id="capture-overview" class="capture-overview" aria-labelledby="overview-title" hidden>
+              <h2 id="overview-title">Capture overview</h2>
+              <div id="overview-content"></div>
+            </section>
+            <section class="results">
+              <div class="section-header">
+                <div>
+                  <div class="eyebrow">Applied detection rules</div>
+                  <h2 id="result-title">Rule findings</h2>
+                </div><span id="review-count" class="summary-label"></span>
+              </div>
+              <p class="applied-rules-note" id="applied-rules-note" role="status"></p>
+              <div class="result-layout">
+                <div id="finding-list" class="finding-list" role="group" aria-label="Applied rules"></div>
+                <article id="detail" class="detail"></article>
+              </div>
+            </section>
+          </section>
+          <section id="secondary-page" hidden></section>
+          <noscript>
+            <p>Enable JavaScript to analyse a sample and switch between the SOC and GRC views.</p>
+          </noscript>
+        </main>
+      </div>
+    </div>
+  </body>
+
+</html>

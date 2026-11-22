@@ -1,0 +1,40 @@
+name: Verify SentinelGRC
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Check fixture reproducibility
+        run: |
+          python3 -m scripts.generate_samples
+          git diff --exit-code -- sample_pcaps app/static/demo-data.js
+      - name: Test the container with the real offline parser
+        run: |
+          docker build --target test -t sentinel-test .
+          docker run --rm --network none --cap-drop ALL --security-opt no-new-privileges sentinel-test
+      - name: Start the production image and check readiness
+        env:
+          ENABLE_UPLOADS: "1"
+        run: |
+          docker compose up --build --wait --wait-timeout 120
+          curl --fail --silent http://127.0.0.1:8000/healthz
+      - name: Check browser workflows and capture screenshots
+        run: |
+          python3 -m venv /tmp/sentinel-browser
+          /tmp/sentinel-browser/bin/pip install playwright==1.65.2
+          /tmp/sentinel-browser/bin/playwright install --with-deps chromium
+          /tmp/sentinel-browser/bin/python -m scripts.browser_check
+      - name: Save SOC and GRC screenshots
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sentinelgrc-screenshots
+          path: docs/screenshots/*.png
+      - name: Stop the test service
+        if: always()
+        run: docker compose down

@@ -1,0 +1,43 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start SentinelGRC",
+      "type": "process",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "options": {
+        "env": {
+          "ENABLE_UPLOADS": "1",
+          "RULES_FILE": "${workspaceFolder}/.sentinel-rules.json",
+          "CAPTURE_LIBRARY_DIR": "${workspaceFolder}/.sentinel-captures"
+        }
+      },
+      "args": [
+        "-m",
+        "uvicorn",
+        "app.main:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000"
+      ],
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Test SentinelGRC",
+      "type": "process",
+      "command": "${workspaceFolder}/.venv/bin/python",
+      "args": [
+        "-m",
+        "unittest",
+        "discover",
+        "-v"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}
