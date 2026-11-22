@@ -896,11 +896,15 @@ main {
   overflow-wrap: anywhere
 }
 
-.upload input {
+.upload input[type=file] {
   display: block;
   width: 100%;
   margin: 14px 0;
   color: var(--soft)
+}
+
+.invite-form {
+  max-width: 24rem
 }
 
 input::file-selector-button {

@@ -78,6 +78,7 @@ The model's PASS and FAIL labels apply to a single rule and capture. An auditor 
 | --- | --- | --- |
 | `PORT` | `8000` | Container listening port, configurable by the host |
 | `ENABLE_UPLOADS` | `0` | Set to `1` to accept custom captures when TShark is present |
+| `INVITE_UPLOAD_HASHES` | unset | Comma-separated SHA-256 hashes of hosted upload invite codes |
 | `RULES_FILE` | unset | Set a writable local JSON path to enable rule editing on loopback with TShark installed |
 | `CAPTURE_LIBRARY_DIR` | unset | Set a writable local folder to retain uploads and reopen them on the loopback server |
 | `ENABLE_OLLAMA` | `0` | Set to `1` to request local model briefs |
@@ -86,7 +87,7 @@ The model's PASS and FAIL labels apply to a single rule and capture. An auditor 
 
 To inspect an authorised capture using Docker, run `ENABLE_UPLOADS=1 docker compose up --build` and select **Capture library → Custom capture**. Docker uses temporary upload storage. Uploads are capped at 50 MiB and 10,000 frames. Each dissection has CPU, output and wall-clock limits. Linux also caps parser address space. A single worker admits two jobs concurrently and 30 job starts per minute.
 
-The portfolio deployment runs the bundled scenarios with uploads disabled. The app has no user accounts. For a hosted service handling private captures, put it behind your identity-aware proxy and configure ingress body, timeout and rate limits. Terminate HTTPS at the hosting edge. Keep the container and its OS packages patched. The image runs as a non-root user and omits the live capture helper. Compose drops all capabilities and uses a read-only root filesystem.
+The portfolio deployment runs bundled scenarios with uploads disabled by default. The app has no user accounts. For a hosted service handling private captures, put it behind your identity-aware proxy and configure ingress body, timeout and rate limits. Terminate HTTPS at the hosting edge. Keep the container and its OS packages patched. The image runs as a non-root user and omits the live capture helper. Compose drops all capabilities and uses a read-only root filesystem.
 
 For local Ollama, install the `llama3.1:8b` model, run Ollama on loopback and start the native Python service with `ENABLE_OLLAMA=1`. The client connects to `127.0.0.1:11434` in the server's own network namespace. Only curated rule metadata and aggregate counts enter the prompt. Missing models, timeouts and malformed model output fall back to labelled rule-based briefs.
 
@@ -109,6 +110,18 @@ If you opened a downloaded source ZIP, initialise its extracted directory first 
 4. Visit the assigned HTTPS URL. Run each sample and check that the analysis engine reads **TShark**.
 
 The Docker service can also run on another container host that provides a writable temporary directory. A static-only host serves fixture replay. [Render Docker deployment](https://render.com/docs/docker)
+
+### Invite people to upload on the hosted demo
+
+Keep `ENABLE_UPLOADS=0` in Render. Generate a different code for each invitee on your own machine:
+
+```sh
+python3 -c 'import hashlib, secrets; code = secrets.token_urlsafe(32); print("Invite code", code); print("Render hash", hashlib.sha256(code.encode()).hexdigest())'
+```
+
+In the Render service's **Environment** settings, set `INVITE_UPLOAD_HASHES` to the comma-separated **Render hash** values and redeploy. Keep the original codes private and give each person only their own code. They can enter it under **Capture library → Custom capture**. To revoke an invitation, remove that hash and redeploy. Anyone holding a valid code can use it, so ask invitees to keep it private.
+
+Invited uploads are analysed and deleted after the request. The hosted demo keeps rule editing and the saved-capture library disabled. Bundled sample analysis remains public.
 
 ## Verification and screenshots
 

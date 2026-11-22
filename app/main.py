@@ -1,4 +1,6 @@
 import asyncio
+import hashlib
+import hmac
 import os
 import re
 import tempfile
@@ -9,7 +11,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from starlette.concurrency import run_in_threadpool
 
 from app import capture_store
@@ -80,6 +82,27 @@ def uploads_enabled():
     return os.getenv("ENABLE_UPLOADS") == "1" and bool(parser.tshark_binary())
 
 
+def invite_hashes(request):
+    render_host = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+    # Render terminates public TLS before forwarding to the Docker web service.
+    secure = request.url.scheme == "https" or local_request(request) or (
+        os.getenv("RENDER") == "true" and render_host and request.url.hostname == render_host
+        and request.headers.get("x-forwarded-proto") == "https"
+    )
+    if not secure or not parser.tshark_binary():
+        return []
+    return [value for value in re.split(r"[\s,]+", os.getenv("INVITE_UPLOAD_HASHES", ""))
+            if re.fullmatch(r"[a-f0-9]{64}", value)]
+
+
+def has_upload_invite(request):
+    scheme, _, code = request.headers.get("authorization", "").partition(" ")
+    if scheme.lower() != "bearer" or not re.fullmatch(r"[A-Za-z0-9_-]{43}", code):
+        return False
+    digest = hashlib.sha256(code.encode("ascii")).hexdigest()
+    return any(hmac.compare_digest(digest, candidate) for candidate in invite_hashes(request))
+
+
 @app.get("/healthz", tags=["Service"])
 def health():
     ready = bool(parser.tshark_binary()) or os.getenv("REQUIRE_TSHARK") != "1"
@@ -87,9 +110,10 @@ def health():
 
 
 @app.get("/api/v1/config", tags=["Service"])
-def config():
+def config(request: Request):
     repository = os.getenv("GITHUB_REPOSITORY", "")
     return {"uploads": uploads_enabled(), "live_parser": bool(parser.tshark_binary()),
+        "invite_uploads": bool(invite_hashes(request)),
         "max_upload_bytes": MAX_BYTES,
         "repository": repository if re.fullmatch(r"[a-zA-Z0-9-]+/[a-zA-Z0-9_.-]+", repository) else None}
 
@@ -189,9 +213,9 @@ async def analyze_saved_capture(request: Request, capture_id: str):
     openapi_extra={"requestBody": {"required": True, "content": {
         "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}}}})
 async def upload(request: Request, name: str | None = Query(default=None, max_length=255)):
-    """Analyse a raw PCAP or PCAPNG body. The host must enable uploads."""
-    if not uploads_enabled():
-        raise HTTPException(403, "Custom uploads are disabled on this host.")
+    """Analyse a raw PCAP or PCAPNG body, using local or invite upload access."""
+    if not uploads_enabled() and not has_upload_invite(request):
+        raise HTTPException(403, "Custom uploads require a valid invitation on this host.")
     if request.headers.get("content-type", "").split(";")[0] != "application/octet-stream":
         raise HTTPException(415, "Send the capture as application/octet-stream.")
     too_large = f"The capture exceeds the {MAX_BYTES // 1024**2} MiB upload limit."
@@ -225,6 +249,13 @@ async def upload(request: Request, name: str | None = Query(default=None, max_le
                 except (OSError, ValueError):
                     raise HTTPException(503, "The capture was analysed but could not be saved to the library.") from None
             return report
+
+
+@app.post("/api/v1/upload-invite", status_code=204, tags=["Analysis"])
+def check_upload_invite(request: Request):
+    if not has_upload_invite(request):
+        raise HTTPException(403, "This invitation code is invalid or has been revoked.")
+    return Response(status_code=204)
 
 
 @app.get("/", include_in_schema=False)

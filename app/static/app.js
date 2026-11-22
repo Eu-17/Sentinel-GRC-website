@@ -16,6 +16,7 @@ const icons = {
 const state = {sample: "ransomware", report: demos.ransomware.report, view: "soc",
     selected: "NET-SOC-101", live: false, uploads: false, maxUploadBytes: 0, busy: false, custom: null, pendingCapture: null,
     saved: null, savedCaptures: [], captureStorage: false, captureLibraryError: "",
+    inviteUploads: false, inviteCode: null,
     rules: null, rulesEditable: false, rulesError: "", ruleNotice: "", ruleSaving: false, ruleRevision: 0,
     reportRevision: 0, ruleDraft: null};
 
@@ -371,12 +372,26 @@ async function runAnalysis(sample = state.sample, file = state.custom, saved = s
         let report;
         if (state.live) {
             let path = "/api/v1/analyze-pcap/" + sample;
-            if (file) path = "/api/v1/upload" + (state.captureStorage ? "?name=" + encodeURIComponent(file.name) : "");
+            const headers = {};
+            const inviteCode = file && !state.uploads ? state.inviteCode : null;
+            if (file) {
+                if (state.inviteUploads && !state.uploads && !inviteCode) {
+                    throw new Error("Enter your invite code in Capture library to upload a capture.");
+                }
+                path = "/api/v1/upload" + (state.captureStorage ? "?name=" + encodeURIComponent(file.name) : "");
+                headers["Content-Type"] = "application/octet-stream";
+                if (inviteCode) headers.Authorization = "Bearer " + inviteCode;
+            }
             if (saved) path = "/api/v1/captures/" + encodeURIComponent(saved.id) + "/analyze";
             const response = await fetch(path, {
-                method: "POST", headers: file ? {"Content-Type": "application/octet-stream"} : {},
+                method: "POST", headers, redirect: inviteCode ? "error" : "follow",
                 body: file || null, signal: AbortSignal.timeout(190000)
             });
+            if (inviteCode && response.status === 403) {
+                if (state.inviteCode === inviteCode) state.inviteCode = null;
+                if (location.hash === "#captures") showPage();
+                throw new Error("Your upload invite is no longer active. Enter a valid code in Capture library.");
+            }
             const body = await response.json();
             if (!response.ok) throw new Error(typeof body.detail === "string" ? body.detail : "Analysis failed.");
             report = body;
@@ -458,6 +473,62 @@ async function requestCaptures() {
     }
 }
 
+function uploadInvite(target) {
+    const form = el("form", "invite-form");
+    const label = el("label", "rule-field", "Upload invite code");
+    const input = el("input");
+    input.type = "password";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    input.required = true;
+    input.maxLength = 96;
+    label.append(input);
+    const submit = el("button", "primary", "Unlock uploads");
+    submit.type = "submit";
+    const actions = el("div", "actions");
+    actions.append(submit);
+    const feedback = el("p", "status");
+    feedback.setAttribute("role", "status");
+    form.append(label, actions, feedback);
+    target.append(el("p", "", "Enter the invite code shared by the site owner to analyse your own capture."), form);
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        if (submit.disabled) return;
+        const code = input.value.trim();
+        input.value = "";
+        feedback.classList.remove("error");
+        if (!/^[A-Za-z0-9_-]{43}$/.test(code)) {
+            feedback.textContent = "Enter a complete upload invite code.";
+            feedback.classList.add("error");
+            input.focus();
+            return;
+        }
+        input.disabled = true;
+        submit.disabled = true;
+        feedback.textContent = "Checking invite code…";
+        try {
+            const response = await fetch("/api/v1/upload-invite", {
+                method: "POST", headers: {Authorization: "Bearer " + code},
+                redirect: "error", signal: AbortSignal.timeout(10000)
+            });
+            if (response.status === 403) throw new Error("This invite code is invalid or no longer active.");
+            if (response.status !== 204) throw new Error("The server could not check your invite. Try again.");
+            state.inviteCode = code;
+            if (location.hash === "#captures") {
+                showPage();
+                document.querySelector(".upload input[type=file]")?.focus();
+            }
+        } catch (error) {
+            feedback.textContent = error instanceof TypeError ? "The server could not check your invite. Try again." : error.message;
+            feedback.classList.add("error");
+        } finally {
+            input.disabled = false;
+            submit.disabled = false;
+        }
+    });
+}
+
 function captureLibrary(target) {
     const cards = el("div", "catalog");
     for (const [key, demo] of Object.entries(demos)) {
@@ -471,7 +542,7 @@ function captureLibrary(target) {
     }
     const upload = el("section", "catalog-card upload");
     upload.append(el("h2", "", "Custom capture"));
-    if (state.uploads) {
+    if (state.uploads || state.inviteCode) {
         const limit = (state.maxUploadBytes / 1024 ** 2) + " MiB";
         const input = el("input");
         input.type = "file";
@@ -494,6 +565,8 @@ function captureLibrary(target) {
         });
         const handling = state.captureStorage ? "Successfully analysed files are saved to this library." : "The server deletes its temporary copy after analysis.";
         upload.append(el("p", "", "Choose or drop an authorised PCAP or PCAPNG, up to " + limit + " and 10,000 frames. " + handling), input, feedback);
+    } else if (state.inviteUploads) {
+        uploadInvite(upload);
     } else {
         upload.append(el("p", "", "This workspace accepts bundled captures. For custom uploads, install TShark and start the local server with ENABLE_UPLOADS=1, or run Docker Compose with ENABLE_UPLOADS=1."));
     }
@@ -763,6 +836,7 @@ async function start() {
         const analysis = runAnalysis();
         await captureRequest;
         state.uploads = config.uploads;
+        state.inviteUploads = config.invite_uploads === true;
         state.maxUploadBytes = config.max_upload_bytes;
         showPage();
         try {

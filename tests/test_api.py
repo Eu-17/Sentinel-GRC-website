@@ -1,4 +1,6 @@
+import hashlib
 import os
+import secrets
 import tempfile
 import unittest
 from pathlib import Path
@@ -142,6 +144,38 @@ class ApiTests(unittest.TestCase):
                 self.assertEqual(report["saved_capture"], saved)
                 self.assertEqual(report["findings"][-1]["id"], "QA-TRAFFIC")
                 self.assertEqual(report["findings"][-1]["count"], 8)
+
+    @unittest.skipUnless(pcap_parser.tshark_binary(), "requires installed TShark")
+    def test_hosted_upload_invite_is_checked_for_each_upload(self):
+        source = (CAPTURES / "03_ssh_burst.pcap").read_bytes()
+        code = secrets.token_urlsafe(32)
+        digest = hashlib.sha256(code.encode()).hexdigest()
+        with tempfile.TemporaryDirectory() as directory:
+            library = Path(directory, "captures")
+            with (patch.dict(os.environ, ENABLE_UPLOADS="0", INVITE_UPLOAD_HASHES=digest,
+                             CAPTURE_LIBRARY_DIR=str(library)),
+                  TestClient(main.app, base_url="https://example.invalid") as client):
+                check = "/api/v1/upload-invite"
+                url = "/api/v1/upload?name=invite.pcap"
+                headers = {"Authorization": "Bearer " + code, "Content-Type": "application/octet-stream"}
+                config = client.get("/api/v1/config").json()
+                self.assertFalse(config["uploads"])
+                self.assertTrue(config["invite_uploads"])
+                self.assertEqual(client.post(check).status_code, 403)
+                self.assertEqual(client.post(url, content=source).status_code, 403)
+                self.assertEqual(client.post(check, headers=headers).status_code, 204)
+                response = client.post(url, headers=headers, content=source)
+                self.assertEqual(response.status_code, 200)
+                self.assertIsNone(response.json()["saved_capture"])
+                self.assertFalse(library.exists())
+                self.assertEqual(client.post(check, headers={**headers, "Origin": "https://elsewhere.invalid"}).status_code, 403)
+                with (patch.dict(os.environ, RENDER="true", RENDER_EXTERNAL_HOSTNAME="demo.onrender.com"),
+                      TestClient(main.app, base_url="http://demo.onrender.com") as proxy):
+                    self.assertEqual(proxy.post(check, headers=headers).status_code, 403)
+                    forwarded = {**headers, "X-Forwarded-Proto": "https"}
+                    self.assertEqual(proxy.post(check, headers=forwarded).status_code, 204)
+                with patch.dict(os.environ, INVITE_UPLOAD_HASHES=""):
+                    self.assertEqual(client.post(url, headers=headers, content=source).status_code, 403)
 
     @unittest.skipUnless(pcap_parser.tshark_binary(), "requires installed TShark")
     def test_live_upload(self):
